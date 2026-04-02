@@ -1,14 +1,10 @@
-##   Research Question
+# RBA Cash Rate and Household Saving Rate
 
-Did reductions in the RBA cash rate reduce the household saving rate in Australia?
-
----
-
-##   Repository Structure
+##  Repository Structure
 
 data/
-  raw/ – original datasets (cash rate, saving rate)
-  clean/ – final merged dataset
+  raw/ – original datasets
+  clean/ – cleaned and merged dataset
 
 code/
   01_clean_data.py – data cleaning and merging
@@ -20,80 +16,80 @@ README.md
 
 ---
 
-##  How to Run This Project 
+## ▶ How to Run the Project 
 
-### Step 1: Clone repository
+### 1. Clone repository
 
-git clone <your-repo-link>
+git clone <https://github.com/Selenge1114/rba-saving-rate-project.git>
 cd rba-saving-rate-project
 
 ---
 
-### Step 2: Install required packages
+### 2. Install required software
+
+Install required packages:
 
 python3 -m pip install pandas statsmodels matplotlib
 
 ---
 
-### Step 3: Prepare raw data 
+### 3. Prepare raw data 
 
 Download data from:
 
 * Reserve Bank of Australia (cash rate)
 * Australian Bureau of Statistics (saving rate)
 
-Then:
+Clean the data manually in Excel:
 
-* Keep only date + variable columns
-* Remove extra headers and notes
-* Save as CSV files:
+* Remove titles, notes, and metadata
+* Keep only relevant columns: date and variable
+* Save as CSV files
 
   * Cash_rate(2011-2025).csv
   * Saving_rate(2011-2025).csv
 
-Place them into:
+Place the files in:
 data/raw/
+
+Raw data is not included due to formatting issues and manual preprocessing requirements.
 
 ---
 
-### Step 4: Run scripts in order
+### 4. Run scripts in order
 
 python3 code/01_clean_data.py
 python3 code/02_analysis.py
 
 ---
 
-##  Output
+##  Data
 
-Final dataset:
+### data/raw/
+
+Contains manually cleaned raw datasets obtained from external sources.
+
+### data/clean/
+
+Contains the final merged dataset used for analysis:
+
 data/clean/final_dataset.csv
-
-Regression results are displayed in the terminal.
 
 ---
 
-##  Data Description (Codebook)
+## 📘 Codebook
 
 * date: Time period
 * saving_rate: Household saving ratio (%)
-* cash_rate: RBA interest rate (%)
-* quarter: Quarterly time period
+* cash_rate: RBA policy interest rate (%)
+* quarter: Quarterly time index
 
 ---
 
-##  Software Used
+##  Code
 
-* Python 3
-* pandas
-* statsmodels
-* matplotlib
+All scripts required to reproduce the dataset are located in the `code/` folder.
 
----
-
-##  notes
-
-* Raw data requires manual cleaning due to formatting issues
-* Cash rate is converted from daily to quarterly averages
-* Saving rate is already quarterly
+Running the scripts in the specified order will generate the cleaned dataset and analysis results.
 
 ---
