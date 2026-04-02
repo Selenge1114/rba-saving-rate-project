@@ -77,7 +77,7 @@ data/clean/final_dataset.csv
 
 ---
 
-## 📘 Codebook
+##  Codebook
 
 * date: Time period
 * saving_rate: Household saving ratio (%)
