@@ -1,7 +1,3 @@
-# rba-saving-rate-project
-Analysis of the relationship between the RBA cash rate and Australian household saving behaviour using Python, with reproducible data processing and regression analysis.
-# RBA Cash Rate and Household Saving Rate (2011–2019)
-
 ##   Research Question
 
 Did reductions in the RBA cash rate reduce the household saving rate in Australia?
