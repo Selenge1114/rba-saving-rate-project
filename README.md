@@ -1,4 +1,4 @@
-# RBA Cash Rate and Household Saving Rate in Australia
+# RBA Cash Rate and Household Saving Rate
 
 **Research Question:** Did reductions in the RBA cash rate reduce the household saving rate in Australia between 2000 and 2025?
 
@@ -6,70 +6,43 @@
 
 ## Repository Structure
 
-```
-rba-saving-rate-project/
-├── README.md
-├── data/
-│   ├── raw/
-│   │   ├── a2-data.csv          ← RBA cash rate (decision dates)
-│   │   ├── Table_34.csv         ← ABS annual saving ratio (fallback)
-│   │   └── 5206034_q.csv        ← ABS quarterly saving ratio [PREFERRED - obtain separately]
-│   └── clean/
-│       ├── final_dataset.csv    ← Merged analysis-ready dataset
-│       └── codebook.md          ← Variable descriptions
-├── code/
-│   ├── 01_clean_data.py         ← Cleans and merges raw data
-│   ├── 02_analysis.py           ← Regression analysis
-│   └── 03_eda.ipynb             ← Exploratory Data Analysis notebook
-└── output/                      ← Generated figures
-```
+- README.md: Project overview and instructions
+- data/raw: Contains a2-data.csv, Table_34.csv, and 5206034_q.csv
+- data/clean: Contains final_dataset.csv and codebook.md
+- code: Contains 01_clean_data.py, 02_analysis.py, and 03_eda.ipynb
+- output: Folder for generated figures
 
 ---
 
-## How to Run the Project From Scratch
+## How to Run the Project
 
 ### Step 1 — Manual data downloads
 
-**RBA Cash Rate (Table A2) — already in repo:**
-The file `data/raw/a2-data.csv` is included. If you need to refresh it:
-1. Go to: https://www.rba.gov.au/statistics/tables/
-2. Find "A2 – Changes in Monetary Policy and Administered Rates"
-3. Click CSV download → save as `data/raw/a2-data.csv`
+**RBA Cash Rate — already in repo:**
+The file data/raw/a2-data.csv is included. To refresh it, download Table A2 as CSV from https://www.rba.gov.au/statistics/tables/ and save as data/raw/a2-data.csv
 
-**ABS Quarterly Saving Ratio (PREFERRED — gives ~102 quarterly obs):**
-1. Go to: https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product/latest-release
-2. Scroll to **"Data downloads"**
-3. Find the table containing **"Household saving ratio"** at quarterly frequency
-   (look for "Table 20 – Household Income Account" or search for "saving ratio")
-4. Download CSV → save as `data/raw/5206034_q.csv`
+**ABS Quarterly Saving Ratio:**
+1. Go to https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product/latest-release
+2. Scroll to Data downloads
+3. Download the quarterly household income account table
+4. Save as data/raw/5206034_q.csv
 
-> **Why the quarterly file is not in the repo:** It is large, updated each quarter by the ABS,
-> and freely available from the official source above.
-
-**ABS Annual Saving Ratio (FALLBACK — already in repo):**
-`data/raw/Table_34.csv` is included. This gives 26 annual observations (one per financial year).
-The cleaning script automatically uses this if `5206034_q.csv` is not present.
+**ABS Annual Saving Ratio — already in repo:**
+data/raw/Table_34.csv is included as a fallback. The cleaning script uses this automatically if 5206034_q.csv is not present.
 
 ---
 
 ### Step 2 — Install required packages
 
 ```bash
-pip install pandas numpy matplotlib seaborn scipy statsmodels jupyter
+pip3 install pandas numpy matplotlib seaborn scipy statsmodels jupyter
 ```
-
-Python 3.8+ required.
 
 ### Step 3 — Run scripts in order
 
 ```bash
-# 1. Produce data/clean/final_dataset.csv
-python code/01_clean_data.py
-
-# 2. Run regression analysis
-python code/02_analysis.py
-
-# 3. Open EDA notebook
+python3 code/01_clean_data.py
+python3 code/02_analysis.py
 jupyter notebook code/03_eda.ipynb
 ```
 
@@ -77,20 +50,10 @@ jupyter notebook code/03_eda.ipynb
 
 ## Data Sources
 
-| Dataset | Source | Frequency | Coverage |
-|---------|--------|-----------|----------|
-| Cash Rate Target | RBA Table A2 | As announced (daily forward-fill → quarterly avg) | 1990–present |
-| Household Saving Ratio | ABS Cat. 5206.0 | Quarterly (preferred) / Annual (fallback) | 1960–present |
+The cash rate data comes from the RBA Table A2, which records each policy decision from 1990 to the present. The household saving ratio comes from the ABS catalogue 5206.0, which provides quarterly estimates from 1960 to the present.
 
 ---
 
 ## Software
 
-| Package | Purpose |
-|---------|---------|
-| pandas | Data manipulation |
-| numpy | Numerical operations |
-| matplotlib / seaborn | Visualisation |
-| scipy | Correlation tests |
-| statsmodels | OLS regression, ADF tests |
-| jupyter | EDA notebook |
+Python 3.10 or higher is required. The following packages are used: pandas for data manipulation, numpy for numerical operations, matplotlib and seaborn for visualisation, scipy for correlation tests, statsmodels for OLS regression and ADF tests, and jupyter for the EDA notebook.

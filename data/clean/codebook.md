@@ -2,9 +2,6 @@
 
 ## Overview
 
-This dataset is the analysis-ready merged file used for all econometric analysis.
-It was produced by `code/01_clean_data.py` from two raw data sources.
-
 - **Unit of observation:** Australian economy, one row per calendar quarter
 - **Frequency:** Quarterly
 - **Coverage:** 2000 Q1 to 2025 Q1
@@ -14,12 +11,13 @@ It was produced by `code/01_clean_data.py` from two raw data sources.
 
 ## Variables
 
-| Variable | Type | Unit | Description | Source |
-|----------|------|------|-------------|--------|
-| `date` | Date | YYYY-MM-DD | First day of the quarter (e.g., 2000-01-01 = Q1 2000) | Derived |
-| `quarter` | Period | e.g., 2000Q1 | Calendar quarter identifier | Derived |
-| `cash_rate` | Numeric | % per annum | RBA cash rate target, quarterly average of daily forward-filled values from A2 decision dates | RBA Table A2 |
-| `saving_rate` | Numeric | % of household disposable income | Household saving ratio, seasonally adjusted | ABS Cat. 5206.0, Table 34 |
+The analysis utilizes two primary data series, both of which have been processed into a quarterly format for consistency.
+
+The cash rate is measured as a percentage per annum. It represents the RBA cash rate target, calculated as a quarterly average of daily forward-filled values based on A2 decision dates, with data sourced from RBA Table A2.
+
+The saving rate is measured as a percentage of household disposable income. This reflects the household saving ratio and is seasonally adjusted, with data sourced from ABS Cat. 5206.0, Table 34.
+
+Two time identifiers are used: date, representing the first day of the quarter (for example, 2000-01-01 for Q1 2000), and quarter, which serves as the calendar quarter identifier. Both are derived from the primary sources to align the datasets.
 
 ---
 

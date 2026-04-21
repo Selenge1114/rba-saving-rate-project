@@ -1,7 +1,7 @@
 """
 01_clean_data.py
 ================
-Cleans and merges raw datasets into analysis-ready CSV.
+
 
 Inputs (place in data/raw/):
   a2-data.csv       RBA Table A2 cash rate decisions

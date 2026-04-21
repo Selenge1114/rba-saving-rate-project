@@ -1,12 +1,12 @@
 """
 02_analysis.py
 ==============
-Primary regression analysis: effect of RBA cash rate on household saving rate.
+ effect of RBA cash rate on household saving rate.
 
 Runs after 01_clean_data.py has produced data/clean/final_dataset.csv.
 
 Run from project root:
-    python code/02_analysis.py
+    python3 code/02_analysis.py
 """
 
 import pandas as pd
