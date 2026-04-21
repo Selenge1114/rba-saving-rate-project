@@ -1,95 +1,96 @@
-# RBA Cash Rate and Household Saving Rate
+# RBA Cash Rate and Household Saving Rate in Australia
 
-##  Repository Structure
-
-data/
-  raw/ – original datasets
-  clean/ – cleaned and merged dataset
-
-code/
-  01_clean_data.py – data cleaning and merging
-  02_analysis.py – regression analysis
-
-output/ – optional outputs
-
-README.md
+**Research Question:** Did reductions in the RBA cash rate reduce the household saving rate in Australia between 2000 and 2025?
 
 ---
 
-## ▶ How to Run the Project 
+## Repository Structure
 
-### 1. Clone repository
-
-git clone <https://github.com/Selenge1114/rba-saving-rate-project.git>
-cd rba-saving-rate-project
-
----
-
-### 2. Install required software
-
-Install required packages:
-
-python3 -m pip install pandas statsmodels matplotlib
-
----
-
-### 3. Prepare raw data 
-
-Download data from:
-
-* Reserve Bank of Australia (cash rate)
-* Australian Bureau of Statistics (saving rate)
-
-Clean the data manually in Excel:
-
-* Remove titles, notes, and metadata
-* Keep only relevant columns: date and variable
-* Save as CSV files
-
-  * Cash_rate(2011-2025).csv
-  * Saving_rate(2011-2025).csv
-
-Place the files in:
-data/raw/
-
-Raw data is not included due to formatting issues and manual preprocessing requirements.
+```
+rba-saving-rate-project/
+├── README.md
+├── data/
+│   ├── raw/
+│   │   ├── a2-data.csv          ← RBA cash rate (decision dates)
+│   │   ├── Table_34.csv         ← ABS annual saving ratio (fallback)
+│   │   └── 5206034_q.csv        ← ABS quarterly saving ratio [PREFERRED - obtain separately]
+│   └── clean/
+│       ├── final_dataset.csv    ← Merged analysis-ready dataset
+│       └── codebook.md          ← Variable descriptions
+├── code/
+│   ├── 01_clean_data.py         ← Cleans and merges raw data
+│   ├── 02_analysis.py           ← Regression analysis
+│   └── 03_eda.ipynb             ← Exploratory Data Analysis notebook
+└── output/                      ← Generated figures
+```
 
 ---
 
-### 4. Run scripts in order
+## How to Run the Project From Scratch
 
-python3 code/01_clean_data.py
-python3 code/02_analysis.py
+### Step 1 — Manual data downloads
 
----
+**RBA Cash Rate (Table A2) — already in repo:**
+The file `data/raw/a2-data.csv` is included. If you need to refresh it:
+1. Go to: https://www.rba.gov.au/statistics/tables/
+2. Find "A2 – Changes in Monetary Policy and Administered Rates"
+3. Click CSV download → save as `data/raw/a2-data.csv`
 
-##  Data
+**ABS Quarterly Saving Ratio (PREFERRED — gives ~102 quarterly obs):**
+1. Go to: https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product/latest-release
+2. Scroll to **"Data downloads"**
+3. Find the table containing **"Household saving ratio"** at quarterly frequency
+   (look for "Table 20 – Household Income Account" or search for "saving ratio")
+4. Download CSV → save as `data/raw/5206034_q.csv`
 
-### data/raw/
+> **Why the quarterly file is not in the repo:** It is large, updated each quarter by the ABS,
+> and freely available from the official source above.
 
-Contains manually cleaned raw datasets obtained from external sources.
-
-### data/clean/
-
-Contains the final merged dataset used for analysis:
-
-data/clean/final_dataset.csv
-
----
-
-##  Codebook
-
-* date: Time period
-* saving_rate: Household saving ratio (%)
-* cash_rate: RBA policy interest rate (%)
-* quarter: Quarterly time index
+**ABS Annual Saving Ratio (FALLBACK — already in repo):**
+`data/raw/Table_34.csv` is included. This gives 26 annual observations (one per financial year).
+The cleaning script automatically uses this if `5206034_q.csv` is not present.
 
 ---
 
-##  Code
+### Step 2 — Install required packages
 
-All scripts required to reproduce the dataset are located in the `code/` folder.
+```bash
+pip install pandas numpy matplotlib seaborn scipy statsmodels jupyter
+```
 
-Running the scripts in the specified order will generate the cleaned dataset and analysis results.
+Python 3.8+ required.
+
+### Step 3 — Run scripts in order
+
+```bash
+# 1. Produce data/clean/final_dataset.csv
+python code/01_clean_data.py
+
+# 2. Run regression analysis
+python code/02_analysis.py
+
+# 3. Open EDA notebook
+jupyter notebook code/03_eda.ipynb
+```
 
 ---
+
+## Data Sources
+
+| Dataset | Source | Frequency | Coverage |
+|---------|--------|-----------|----------|
+| Cash Rate Target | RBA Table A2 | As announced (daily forward-fill → quarterly avg) | 1990–present |
+| Household Saving Ratio | ABS Cat. 5206.0 | Quarterly (preferred) / Annual (fallback) | 1960–present |
+
+---
+
+## Software
+
+| Package | Purpose |
+|---------|---------|
+| pandas | Data manipulation |
+| numpy | Numerical operations |
+| matplotlib / seaborn | Visualisation |
+| scipy | Correlation tests |
+| statsmodels | OLS regression, ADF tests |
+| jupyter | EDA notebook |
