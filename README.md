@@ -1,16 +1,19 @@
 # RBA Cash Rate and Household Saving Rate
 
-**Research Question:** Did reductions in the RBA cash rate reduce the household saving rate in Australia between 2000 and 2025?
+**Research Question:** Does a change in the RBA cash rate affect the household saving rate in Australia between 2011 and 2025?
+
+**Analytical Ambition:** Causal — we estimate an ADL(1,1) model using the RBA's institutional independence as the basis for conditional exogeneity.
 
 ---
 
 ## Repository Structure
 
 - README.md: Project overview and instructions
+- analysis.py: Primary analysis file — runs end-to-end on clean data
 - data/raw: Contains a2-data.csv, Table_34.csv, and 5206034_q.csv
 - data/clean: Contains final_dataset.csv and codebook.md
 - code: Contains 01_clean_data.py, 02_analysis.py, and 03_eda.ipynb
-- output: Folder for generated figures
+- output: Folder for generated figures and regression table
 
 ---
 
@@ -42,9 +45,19 @@ pip3 install pandas numpy matplotlib seaborn scipy statsmodels jupyter
 
 ```bash
 python3 code/01_clean_data.py
-python3 code/02_analysis.py
+python3 analysis.py
 jupyter notebook code/03_eda.ipynb
 ```
+
+---
+
+## Econometric Specification
+
+Model: ADL(1,1) — SavingRate_t = a + b1*CashRate_t + b2*CashRate_(t-1) + b3*SavingRate_(t-1) + b4*COVID_t + b5*t + e_t
+
+Error structure: Newey-West HAC standard errors (4 lags)
+
+Identification: The RBA sets the cash rate via its inflation and employment mandate. Conditional on lagged saving, the COVID dummy, and a time trend, cash rate movements are treated as approximately exogenous.
 
 ---
 
