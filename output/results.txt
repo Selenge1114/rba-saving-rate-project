@@ -1,0 +1,115 @@
+This analysis is causal. We attempt to identify the effect of the RBA cash rate on the Australian household saving rate using an ADL(1,1) model. Identification relies on the RBA's institutional independence: the cash rate is set by the RBA's inflation and employment mandate, not by households. After conditioning on lagged saving, the COVID shock, and a time trend, we treat cash rate movements as approximately exogenous. The causal claim is qualified — we acknowledge that common macro shocks may create residual omitted variable bias, so estimates are best interpreted as an upper bound on the true policy effect.
+Loaded clean data: 104 rows from data/clean/final_dataset.csv
+Date range: 2000-01-01 to 2025-10-01
+Variables: ['date', 'quarter', 'cash_rate', 'saving_rate']
+
+============================================================
+TABLE 1: Summary Statistics
+============================================================
+                 N   Mean    Std   Min   p25    p50    p75    Max
+saving_rate  104.0  4.369  4.196 -2.33  1.21  4.655  6.450  21.05
+cash_rate    104.0  3.576  1.917  0.10  1.96  3.920  4.992   7.25
+
+Saved: output/fig1_timeseries.png
+Saved: output/fig2_scatter.png
+Specification: We estimate an ADL(1,1) — Autoregressive Distributed Lag model. The equation is: SavingRate_t = a + b1*CashRate_t + b2*CashRate_(t-1) + b3*SavingRate_(t-1) + b4*COVID_t + b5*t + e_t. The contemporaneous cash rate captures the immediate effect of monetary policy. The one-quarter lag captures delayed pass-through as mortgage and deposit rates reprice with a delay. The lagged saving rate controls for saving inertia. The COVID dummy covers 2020 Q1 to 2021 Q2. A linear time trend absorbs slow-moving structural changes. We use Newey-West HAC standard errors with 4 lags to correct for serial correlation and heteroskedasticity in quarterly data. For identification, we rely on the RBA setting the cash rate via its inflation and employment mandate. Conditional on lagged saving, the COVID shock, and the time trend, cash rate movements are treated as approximately exogenous to the household saving decision.
+Analytic sample: 103 quarterly observations
+COVID quarters: 6
+
+
+============================================================================================
+TABLE 2: OLS Estimates — Determinants of Household Saving Rate
+Dependent variable: Saving Rate (%). HAC robust SEs (NW, 4 lags) in parentheses.
+============================================================================================
+Variable                       (1) Bivariate       (2)+COVID      (3)+Lag SR    (4) Full ADL
+────────────────────────────────────────────────────────────────────────────────────────────
+Cash Rate (%)                      -1.548***       -1.254***          -0.345       -2.107***
+                                     (0.312)         (0.265)         (0.221)         (0.519)
+Cash Rate, Lag 1                                                                   +1.921***
+                                                                                     (0.450)
+Saving Rate, Lag 1                                                 +0.654***       +0.598***
+                                                                     (0.119)         (0.106)
+COVID-19 Dummy                                     +5.554***          +2.743          +2.988
+                                                     (1.744)         (1.914)         (1.830)
+Time Trend                                                                         +0.020***
+                                                                                     (0.007)
+Constant                           +9.907***       +8.537***        +2.620**          +1.227
+                                     (1.326)         (1.075)         (1.233)         (1.144)
+────────────────────────────────────────────────────────────────────────────────────────────
+N                                        103             103             103             103
+R²                                     0.498           0.577           0.753           0.786
+Adj. R²                                0.493           0.568           0.746           0.775
+Durbin-Watson                          0.564           0.833           2.112           2.214
+────────────────────────────────────────────────────────────────────────────────────────────
+Significance: * p<0.10  ** p<0.05  *** p<0.01
+Note: Columns (1)–(4) add controls progressively.
+      Column (4) is the preferred specification.
+
+Saved: output/table2_regression.txt
+
+INTERPRETATION — Column (4) Preferred Specification
+────────────────────────────────────────────────────────────────────────────────────────────
+β₁  Cash Rate (contemporaneous): -2.107  (SE = 0.519)
+    A 1 pp increase in the cash rate is associated with a -2.107 pp change
+    in the saving rate IN THE SAME QUARTER, holding lagged saving, COVID,
+    and trend constant. Units: percentage points → percentage points.
+
+β₂  Cash Rate, Lag 1:            +1.921  (SE = 0.450)
+    The additional effect arriving one quarter later (delayed pass-through).
+    Two-quarter cumulative effect = β₁ + β₂ = -0.186 pp.
+
+β₃  Saving Rate, Lag 1:          +0.598  (SE = 0.106)
+    Saving inertia: each 1 pp in last quarter's saving predicts +0.598 pp
+    this quarter. Implies mean-reversion half-life of ~1.9 quarters.
+
+β₄  COVID-19 Dummy:              +2.988  (SE = 1.830)
+    COVID quarters associated with ~+3.0 pp higher saving, conditional
+    on all other variables (forced saving + precautionary motive).
+
+Long-run multiplier:             -0.462
+    Permanent 1 pp cash rate increase → saving rate eventually rises by
+    -0.462 pp. LR = (β₁+β₂)/(1−β₃).
+────────────────────────────────────────────────────────────────────────────────────────────
+
+Threats to identification:
+
+- Omitted variable bias: Recessions reduce saving and prompt RBA cuts simultaneously, so omitting recession severity likely biases the cash rate coefficient downward. We partially address this using the lagged saving rate, the COVID dummy, and a time trend, though the 2012 slowdown is not individually controlled for.
+
+- Reverse causality: The RBA may cut rates in response to weak domestic demand, which correlates with low saving, creating a feedback loop. The direction of bias is ambiguous. We rely on the RBA's institutional mandate targeting inflation and employment rather than saving, but cannot fully resolve this with OLS. The ideal fix would be narrative policy surprise instruments such as those from Romer and Romer (2004).
+
+- Short sample: At around 57 quarters, the sample risks inflated t-statistics if the HAC bandwidth is misspecified. We use Newey-West standard errors with 4 lags, following the standard quarterly rule of T to the power of one-third.
+
+- COVID-19 structural break: The large spike in saving coincides with a near-zero cash rate, producing a spurious negative correlation in the bivariate model. We address this by including a COVID dummy from column 2 onward.
+
+- Measurement error: The ABS saving ratio is subject to revisions, which introduces classical measurement error and attenuates coefficients toward zero. We use the latest available release but no retrospective fix is possible.
+DIAGNOSTIC TESTS — Preferred Specification (Column 4)
+──────────────────────────────────────────────────
+Ljung-Box test (residual serial correlation):
+   lb_stat  lb_pvalue
+4   2.6610     0.6161
+8  12.0715     0.1480
+  → p > 0.05: no evidence of remaining autocorrelation
+
+Breusch-Pagan heteroskedasticity: stat=13.828, p=0.0167
+  → p < 0.05 confirms heteroskedasticity; addressed by HAC SEs
+
+Durbin-Watson: 2.214  (2 = no serial correlation)
+
+ROBUSTNESS — COVID quarters excluded
+──────────────────────────────────────────────────
+  cash_rate                  excl-COVID: -1.620*** (0.348)  |  full: -2.107*** (0.519)
+  cash_rate_lag1             excl-COVID: +1.558*** (0.331)  |  full: +1.921*** (0.450)
+  saving_rate_lag1           excl-COVID: +0.720*** (0.076)  |  full: +0.598*** (0.106)
+  → Stable coefficients suggest COVID dummy adequately handles the break.
+
+Saved: output/fig3_fitted.png
+
+SESSION INFO
+────────────────────────────────────────
+Python:       3.14.3
+pandas:       3.0.1
+numpy:        2.4.3
+statsmodels:  0.14.6
+matplotlib:   3.10.8
+
+✓ analysis.py complete. Outputs saved to output/
