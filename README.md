@@ -79,7 +79,7 @@ Remove metadata rows and save as plain CSV before running Step 4.
 ```bash
 python3 code/01_clean_data.py    # produces data/clean/final_dataset.csv
 python3 code/02_analysis.py      # primary analysis + fig_actual_vs_fitted.png
-python3 code/03_robustness.py    # robustness checks + forest plot + table CSV
+jupyter nbconvert --to notebook --execute code/03_robustness.ipynb --output code/03_robustness.ipynb    # robustness checks + forest plot + table CSV
 ```
 
 ## Data
