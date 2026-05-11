@@ -1,0 +1,11 @@
+Column,Label,beta,SE,p_value,Significance,R2,N,Notes
+(1),Main,-0.1624,0.5596,0.7717,,0.0399,102,"Preferred: FD, HAC(4), Δcash(-1), Δsave(-1), COVID"
+(2),No controls,0.0892,0.5592,0.8732,,0.0002,102,A1: drops Δsave(-1) and COVID dummy
+(3),Add GFC+lag2,-0.0715,0.9052,0.937,,0.0688,101,A2: adds GFC dummy and Δsave(-2)
+(4),Excl. COVID,0.0089,0.5201,0.9863,,0.0172,94,B1: drops 2020Q1–2021Q4 (n=7 obs removed)
+(5),Post-2007,-0.3244,0.6289,0.606,,0.0317,76,B2: restricts to 2007Q1 onward
+(6),Levels,-1.0834,0.1185,0.0,***,0.6497,104,"C1: levels (not FD); y=saving_rate, x=cash_rate; HC3"
+(7),IHS form,0.0503,0.2056,0.8068,,0.131,102,C2: IHS(saving) and IHS(Δcash); handles negatives
+(8),HC3 SE,-0.1624,0.5857,0.7816,,0.0399,102,"D1: same spec as main, HC3 instead of HAC(4)"
+(9),HAC(2),-0.1624,0.5557,0.7701,,0.0399,102,"D2: same spec as main, HAC bandwidth=2"
+(10),Pre-COVID,1.4514,0.4937,0.0033,***,0.2507,78,E1: 2000Q1–2019Q4; GFC dummy replaces COVID
