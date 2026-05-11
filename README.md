@@ -15,7 +15,7 @@ data/
 code/
   01_clean_data.py   – data cleaning and merging
   02_analysis.py     – primary econometric analysis (4 OLS models)
-  03_robustness.py   – robustness analysis (10 specifications)
+  03_robustness.ipynb – robustness analysis (10 specifications)
 
 output/
   fig_actual_vs_fitted.png      – Model 4 actual vs fitted (from 02)
@@ -107,7 +107,7 @@ Final merged quarterly dataset used for all analysis.
 |--------|---------|
 | `01_clean_data.py` | Merges RBA A2 daily decisions (forward-filled to quarterly averages) with ABS quarterly saving ratios |
 | `02_analysis.py` | Runs Models 1–4: levels (no controls), levels + COVID dummy, first differences, first differences + COVID dummy + lagged DV (preferred) |
-| `03_robustness.py` | Ten-column robustness table: alternative controls, samples, functional forms, inference methods, and time windows. Saves forest plot and CSV table. |
+| `03_robustness.ipynb` | Ten-column robustness table
 
 ---
 
