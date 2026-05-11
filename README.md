@@ -113,7 +113,7 @@ Final merged quarterly dataset used for all analysis.
 
 ## Robustness Summary
 
-Ten specifications are compared against the main result (see `code/03_robustness.py` and `output/robustness_table.csv`):
+Ten specifications are compared against the main result (see `code/03_robustness.ipynb` and `output/robustness_table.csv`):
 
 | Col | Check | Category |
 |-----|-------|----------|
