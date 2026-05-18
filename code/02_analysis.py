@@ -1,137 +1,218 @@
 """
 02_analysis.py
 ==============
- effect of RBA cash rate on household saving rate.
+RBA Cash Rate and Australian Household Saving Rate
+Descriptive analysis — no causal claim is made.
 
 Runs after 01_clean_data.py has produced data/clean/final_dataset.csv.
 
 Run from project root:
     python3 code/02_analysis.py
+
+Produces:
+    output/fig_actual_vs_fitted.png   – Model 4 actual vs fitted
+    output/table2_regression.txt      – Regression table (text)
+    output/results.txt                – Summary statistics
 """
 
-import pandas as pd
+import os
+import sys
+import warnings
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from statsmodels.stats.stattools import durbin_watson
-import os
+from statsmodels.stats.diagnostic import acorr_ljungbox, het_breuschpagan
 
+warnings.filterwarnings('ignore')
 os.makedirs('output', exist_ok=True)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Load data
-# ─────────────────────────────────────────────────────────────────────────────
+plt.rcParams.update({
+    'figure.dpi': 120,
+    'axes.spines.top': False,
+    'axes.spines.right': False,
+    'axes.grid': True,
+    'grid.alpha': 0.3
+})
+
+# 0. DECLARATION
+print(
+    "Declaration: This analysis is DESCRIPTIVE. The coefficients capture "
+    "conditional correlations between changes in the RBA cash rate and changes "
+    "in the household saving rate. No causal claim is made. The cash rate is set "
+    "by the RBA in response to macroeconomic conditions, so reverse causality and "
+    "omitted variable bias are both plausible."
+)
+
+# 1. LOAD DATA
 df = pd.read_csv('data/clean/final_dataset.csv', parse_dates=['date'])
 df = df.sort_values('date').reset_index(drop=True)
 df['quarter'] = df['date'].dt.to_period('Q')
 
-print(f"Dataset: {len(df)} quarters, {df['quarter'].min()} to {df['quarter'].max()}\n")
+print(f"\nDataset: {len(df)} quarters, {df['quarter'].min()} to {df['quarter'].max()}\n")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Feature engineering
-# ─────────────────────────────────────────────────────────────────────────────
-# First differences
+# 2. FEATURE ENGINEERING
 df['d_saving_rate'] = df['saving_rate'].diff()
 df['d_cash_rate']   = df['cash_rate'].diff()
+df['d_cash_rate_lag1'] = df['d_cash_rate'].shift(1)  # Δcash(t-1) for M4
+df['d_saving_lag1'] = df['d_saving_rate'].shift(1)   # Δsave(t-1) for M4
 
-# Lagged cash rate (1 and 2 quarters)
-df['cash_rate_lag1'] = df['cash_rate'].shift(1)
-df['cash_rate_lag2'] = df['cash_rate'].shift(2)
-df['d_cash_rate_lag1'] = df['d_cash_rate'].shift(1)
-
-# COVID dummy: 1 for 2020Q2–2021Q4
+# COVID dummy: 2020Q2–2021Q4 (quarters where saving spiked due to non-monetary
+# factors: lockdowns, restricted spending, fiscal transfers)
 df['covid'] = ((df['quarter'] >= '2020Q2') & (df['quarter'] <= '2021Q4')).astype(int)
 
-# GFC dummy: 1 for 2008Q3–2009Q2
-df['gfc'] = ((df['quarter'] >= '2008Q3') & (df['quarter'] <= '2009Q2')).astype(int)
-
-# Lagged dependent variable
-df['d_saving_lag1'] = df['d_saving_rate'].shift(1)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Model 1: Simple OLS — levels (baseline, likely spurious if I(1))
-# ─────────────────────────────────────────────────────────────────────────────
+# 3. SUMMARY STATISTICS
 print("=" * 60)
-print("MODEL 1: OLS Levels (no controls)")
-print("saving_rate = α + β·cash_rate + ε")
+print("TABLE 1: Summary Statistics")
 print("=" * 60)
+cols = ['saving_rate', 'cash_rate', 'd_saving_rate', 'd_cash_rate']
+desc = df[cols].describe().T
+desc.columns = ['N', 'Mean', 'Std', 'Min', 'p25', 'p50', 'p75', 'Max']
+print(desc.round(3).to_string())
+print()
 
-df1 = df[['saving_rate', 'cash_rate']].dropna()
-X1 = sm.add_constant(df1['cash_rate'])
-m1 = sm.OLS(df1['saving_rate'], X1).fit(cov_type='HC3')
-print(m1.summary())
+with open('output/results.txt', 'w') as f:
+    f.write("Summary Statistics\n")
+    f.write(desc.round(3).to_string())
+    f.write("\n")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Model 2: Levels with COVID dummy
-# ─────────────────────────────────────────────────────────────────────────────
-print("\n" + "=" * 60)
-print("MODEL 2: OLS Levels + COVID dummy")
-print("saving_rate = α + β·cash_rate + γ·COVID + ε")
-print("=" * 60)
+# 4. ECONOMETRIC SPECIFICATION
+print(
+    "Models 1–4 estimated with OLS and HAC standard errors (Newey-West, 4 lags).\n"
+    "M1: Levels bivariate\n"
+    "M2: Levels + COVID dummy\n"
+    "M3: First differences (Δsaving = alpha + beta*Δcash + eps)\n"
+    "M4 (PREFERRED): Δsaving_t = alpha + beta*Δcash_(t-1) + gamma*Δsaving_(t-1)"
+    " + delta*COVID + eps\n"
+    "Declaration: DESCRIPTIVE — no causal claim is made.\n"
+)
 
-df2 = df[['saving_rate', 'cash_rate', 'covid']].dropna()
-X2 = sm.add_constant(df2[['cash_rate', 'covid']])
-m2 = sm.OLS(df2['saving_rate'], X2).fit(cov_type='HC3')
-print(m2.summary())
+def fit_hac(y, X_df, lags=4):
+    X = sm.add_constant(X_df, has_constant='add')
+    return sm.OLS(y, X).fit(cov_type='HAC', cov_kwds={'maxlags': lags})
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Model 3: First differences (addresses non-stationarity)
-# ─────────────────────────────────────────────────────────────────────────────
-print("\n" + "=" * 60)
-print("MODEL 3: First Differences")
-print("Δsaving_rate = α + β·Δcash_rate + ε")
-print("=" * 60)
+# 5. ESTIMATE MODELS
+# M1 & M2: levels
+df1 = df[['saving_rate', 'cash_rate', 'covid']].dropna()
+m1 = fit_hac(df1['saving_rate'], df1[['cash_rate']])
+m2 = fit_hac(df1['saving_rate'], df1[['cash_rate', 'covid']])
 
+# M3: first differences (contemp)
 df3 = df[['d_saving_rate', 'd_cash_rate']].dropna()
-X3 = sm.add_constant(df3['d_cash_rate'])
-m3 = sm.OLS(df3['d_saving_rate'], X3).fit(cov_type='HAC', cov_kwds={'maxlags': 4})
-print(m3.summary())
-print(f"Durbin-Watson: {durbin_watson(m3.resid):.3f}")
+m3 = fit_hac(df3['d_saving_rate'], df3[['d_cash_rate']])
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Model 4: First differences with COVID dummy and lagged DV (preferred model)
-# ─────────────────────────────────────────────────────────────────────────────
-print("\n" + "=" * 60)
-print("MODEL 4: First Differences + COVID dummy + Lagged DV (Preferred)")
-print("Δsaving_rate = α + β·Δcash_rate(t-1) + γ·Δsaving(t-1) + δ·COVID + ε")
-print("=" * 60)
-
+# M4 (preferred): first diff + lagged Δcash + lagged DV + COVID
 df4 = df[['d_saving_rate', 'd_cash_rate_lag1', 'd_saving_lag1', 'covid']].dropna()
+m4 = fit_hac(df4['d_saving_rate'], df4[['d_cash_rate_lag1', 'd_saving_lag1', 'covid']])
+
+print(f"M1 sample: N={int(m1.nobs)}")
+print(f"M2 sample: N={int(m2.nobs)}")
+print(f"M3 sample: N={int(m3.nobs)}")
+print(f"M4 sample: N={int(m4.nobs)}, COVID quarters: {df4['covid'].sum()}\n")
+
+# 6. REGRESSION TABLE
+def fmt(model, var):
+    try:
+        c  = model.params[var]
+        se = model.bse[var]
+        p  = model.pvalues[var]
+        st = '***' if p < 0.01 else ('**' if p < 0.05 else ('*' if p < 0.10 else ''))
+        return f"{c:+.3f}{st}", f"({se:.3f})"
+    except KeyError:
+        return "", ""
+
+MODELS = [m1, m2, m3, m4]
+LABELS = ['(1) Levels', '(2)+COVID', '(3) FD', '(4) FD Preferred']
+VARLIST = [
+    ('cash_rate',        'Cash rate (%)'),
+    ('covid',            'COVID dummy'),
+    ('d_cash_rate',      'dCash rate'),
+    ('d_cash_rate_lag1', 'dCash rate, t-1'),
+    ('d_saving_lag1',    'dSaving rate, t-1'),
+    ('const',            'Constant'),
+]
+
+W = 18
+hdr = f"{'Variable':<28}" + "".join(f"{l:>{W}}" for l in LABELS)
+sep = "-" * (28 + W * 4)
+
+lines_out = []
+lines_out.append("")
+lines_out.append("=" * (28 + W * 4))
+lines_out.append("TABLE 2: OLS Estimates")
+lines_out.append("HAC robust SEs (Newey-West, 4 lags) in parentheses.")
+lines_out.append("Declaration: DESCRIPTIVE. No causal claim is made.")
+lines_out.append("=" * (28 + W * 4))
+lines_out.append(hdr)
+lines_out.append(sep)
+
+for code, label in VARLIST:
+    crow = f"{label:<28}"
+    srow = f"{'':28}"
+    for m in MODELS:
+        c, s = fmt(m, code)
+        crow += f"{c:>{W}}"
+        srow += f"{s:>{W}}"
+    lines_out.append(crow)
+    lines_out.append(srow)
+
+lines_out.append(sep)
+lines_out.append(f"{'N':<28}" + "".join(f"{int(m.nobs):>{W}}" for m in MODELS))
+lines_out.append(f"{'R2':<28}" + "".join(("{:" + f">{W}" + "}").format(f"{m.rsquared:.3f}") for m in MODELS))
+lines_out.append(f"{'Adj. R2':<28}" + "".join(("{:" + f">{W}" + "}").format(f"{m.rsquared_adj:.3f}") for m in MODELS))
+lines_out.append(f"{'Durbin-Watson':<28}" + "".join(("{:" + f">{W}" + "}").format(f"{durbin_watson(m.resid):.3f}") for m in MODELS))
+lines_out.append(sep)
+lines_out.append("* p<0.10  ** p<0.05  *** p<0.01")
+lines_out.append("M1-M2: dependent variable = saving_rate (levels).")
+lines_out.append("M3-M4: dependent variable = first difference of saving_rate.")
+lines_out.append("M4 is the preferred specification.")
+lines_out.append("")
+
+table_str = "\n".join(lines_out)
+print(table_str)
+
+with open('output/table2_regression.txt', 'w') as f:
+    f.write(table_str)
+print("Saved: output/table2_regression.txt")
+
+# 7. DIAGNOSTICS
+print("\nDIAGNOSTICS — Preferred Specification (M4)")
+print("-" * 50)
+lb = acorr_ljungbox(m4.resid, lags=[4, 8], return_df=True)
+print("Ljung-Box test (residual serial correlation):")
+print(lb[['lb_stat', 'lb_pvalue']].round(4))
+
 X4 = sm.add_constant(df4[['d_cash_rate_lag1', 'd_saving_lag1', 'covid']])
-m4 = sm.OLS(df4['d_saving_rate'], X4).fit(cov_type='HAC', cov_kwds={'maxlags': 4})
-print(m4.summary())
+bp_stat, bp_p, _, _ = het_breuschpagan(m4.resid, X4)
+print(f"\nBreusch-Pagan: stat={bp_stat:.3f}, p={bp_p:.4f}")
 print(f"Durbin-Watson: {durbin_watson(m4.resid):.3f}")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Results summary table
-# ─────────────────────────────────────────────────────────────────────────────
-print("\n" + "=" * 60)
-print("RESULTS SUMMARY")
-print("=" * 60)
-print(f"{'Model':<45} {'β (cash rate)':<15} {'R²':<8} {'N'}")
-print("-" * 75)
-print(f"{'1. Levels (no controls)':<45} {m1.params['cash_rate']:>+.3f}{'*' if m1.pvalues['cash_rate']<0.05 else '':<5} {m1.rsquared:.3f}    {int(m1.nobs)}")
-print(f"{'2. Levels + COVID dummy':<45} {m2.params['cash_rate']:>+.3f}{'*' if m2.pvalues['cash_rate']<0.05 else '':<5} {m2.rsquared:.3f}    {int(m2.nobs)}")
-print(f"{'3. First differences':<45} {m3.params['d_cash_rate']:>+.3f}{'*' if m3.pvalues['d_cash_rate']<0.05 else '':<5} {m3.rsquared:.3f}    {int(m3.nobs)}")
-print(f"{'4. First diff + COVID + Lag DV':<45} {m4.params['d_cash_rate_lag1']:>+.3f}{'*' if m4.pvalues['d_cash_rate_lag1']<0.05 else '':<5} {m4.rsquared:.3f}    {int(m4.nobs)}")
-print("Note: * p<0.05. HAC standard errors used for first-difference models.")
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Plot: actual vs fitted for preferred model (Model 4)
-# ─────────────────────────────────────────────────────────────────────────────
+# 8. FIGURE: ACTUAL VS FITTED (M4)
 fig, ax = plt.subplots(figsize=(12, 5))
-idx4 = df4.index
-ax.plot(df.loc[idx4, 'date'], df4['d_saving_rate'], label='Actual Δsaving_rate',
-        color='steelblue', linewidth=1.5)
-ax.plot(df.loc[idx4, 'date'], m4.fittedvalues, label='Fitted (Model 4)',
-        color='darkorange', linewidth=1.5, linestyle='--')
+dates4 = df.loc[df4.index, 'date']
+ax.plot(dates4, df4['d_saving_rate'], color='steelblue', linewidth=1.5,
+        label='Actual delta saving rate')
+ax.plot(dates4, m4.fittedvalues, color='darkorange', linewidth=1.5,
+        linestyle='--', label='Fitted (M4 preferred)')
 ax.axhline(0, color='black', linewidth=0.7, linestyle=':')
 ax.set_title('Model 4: Actual vs Fitted — Quarterly Change in Saving Rate',
              fontweight='bold')
 ax.set_xlabel('Date')
-ax.set_ylabel('Δ Saving Rate (pp)')
+ax.set_ylabel('Change in Saving Rate (pp)')
 ax.legend()
 plt.tight_layout()
 plt.savefig('output/fig_actual_vs_fitted.png', dpi=150, bbox_inches='tight')
-plt.show()
+plt.close()
+print("\nSaved: output/fig_actual_vs_fitted.png")
+
+# 9. SESSION INFO
+print("\nSESSION INFO")
+print("-" * 40)
+print(f"Python:       {sys.version.split()[0]}")
+print(f"pandas:       {pd.__version__}")
+print(f"numpy:        {np.__version__}")
+import statsmodels
+print(f"statsmodels:  {statsmodels.__version__}")
+print("\nAnalysis complete. Outputs saved to output/")
 print("\nFigure saved to output/fig_actual_vs_fitted.png")
